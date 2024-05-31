@@ -26,9 +26,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract DegenToken is ERC20, Ownable {
     mapping(string => uint256) public itemPrices;
     string[] private itemNames;
+    mapping(address => mapping(string => uint256)) public playerItems;
+
+    event ItemRedeemed(address indexed player, string itemName);
 
     constructor() ERC20("Degen", "DGN") Ownable(msg.sender) {
-    _initializeItemPrices();
+        _initializeItemPrices();
     }
 
     function _initializeItemPrices() private {
@@ -66,6 +69,8 @@ contract DegenToken is ERC20, Ownable {
         require(balanceOf(msg.sender) >= itemPrice, "Insufficient balance");
 
         _burn(msg.sender, itemPrice);
+        playerItems[msg.sender][itemName]++;
+        emit ItemRedeemed(msg.sender, itemName);
     }
 
     function burnTokens(uint256 amount) external {
@@ -74,7 +79,21 @@ contract DegenToken is ERC20, Ownable {
 
         _burn(msg.sender, amount);
     }
-}   
+
+    function getPlayerItems(address player) external view returns (string[] memory, uint256[] memory) {
+        uint256 itemCount = itemNames.length;
+        string[] memory ownedItems = new string[](itemCount);
+        uint256[] memory itemQuantities = new uint256[](itemCount);
+
+        for (uint256 i = 0; i < itemCount; i++) {
+            string memory itemName = itemNames[i];
+            ownedItems[i] = itemName;
+            itemQuantities[i] = playerItems[player][itemName];
+        }
+
+        return (ownedItems, itemQuantities);
+    }
+}       
 ```
 
 Copy and Paste: Copy the contract code you provided and paste it into the `MyDegenToken.sol`.file in Remix.
